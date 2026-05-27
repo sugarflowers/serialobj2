@@ -1,0 +1,11 @@
+[package]
+name = "serialobj"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+regex = "1.12.3"
+serialport = "4.9.0"
+binaryfile = { git = "https://github.com/sugarflowers/binaryfile.git" }
+
