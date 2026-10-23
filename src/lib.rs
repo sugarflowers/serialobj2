@@ -50,6 +50,7 @@ impl SerialComm {
         Ok(())
     }
 
+    /*
     pub fn wait_for(&mut self, target: &str) -> Result<String> {
         self.port
             .set_timeout(std::time::Duration::from_secs(60))
@@ -86,6 +87,48 @@ impl SerialComm {
 
                 if let Some(caps) = re.captures(&data) {
                     return Ok(caps[0].to_string());
+                }
+            }
+        }
+    }
+    */
+
+    pub fn wait_for(&mut self, target: &str) -> Result<String> {
+        self.port
+            .set_timeout(std::time::Duration::from_secs(1))?;
+    
+        let re = Regex::new(target)?;
+        let mut linebuffer = Vec::new();
+        let mut buffer = [0u8; 1024];
+    
+        let start = std::time::Instant::now();
+    
+        loop {
+            if start.elapsed() > std::time::Duration::from_secs(60) {
+                anyhow::bail!("wait_for timeout");
+            }
+    
+            match self.port.read(&mut buffer) {
+                Ok(n) => {
+                    linebuffer.extend_from_slice(&buffer[..n]);
+    
+                    let data =
+                        String::from_utf8_lossy(&linebuffer);
+    
+                    if let Some(caps) = re.captures(&data) {
+                        return Ok(caps[0].to_string());
+                    }
+                }
+    
+                Err(ref e)
+                    if e.kind() == std::io::ErrorKind::TimedOut =>
+                {
+                    continue;
+                }
+    
+                Err(e) => {
+                    return Err(e)
+                        .context("Failed to read serial port");
                 }
             }
         }
